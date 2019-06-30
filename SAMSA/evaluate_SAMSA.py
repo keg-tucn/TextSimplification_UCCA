@@ -1,9 +1,9 @@
-
-from xml.etree.ElementTree import ElementTree, tostring, fromstring
-
+import sys
 import os
-from parseXML import Parser
+from UCCA_Simplification.parseXML import Parser
 import json
+import SAMSA.scene_sentence_alignment
+
 
 class Evaluate_SAMSA:
 
@@ -87,9 +87,9 @@ class Evaluate_SAMSA:
 
 
     @staticmethod
-    def get_nr_sentences(f):
-        directory = os.fsencode('Output')
-        source_directory = 'Output/'
+    def get_nr_sentences(f, results):
+        directory = os.fsencode(results)
+        source_directory = results + "/"
         nr = 0
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
@@ -117,10 +117,10 @@ class Evaluate_SAMSA:
             return True
 
     @staticmethod
-    def get_sentences(f):
+    def get_sentences(f, results):
         sentences = []
-        directory = os.fsencode('Output')
-        source_directory = 'Output/'
+        directory = os.fsencode(results)
+        source_directory = results + "/"
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
             if filename.startswith(f + "_"):
@@ -306,10 +306,10 @@ class Evaluate_SAMSA:
         return y
 
     @staticmethod
-    def function_unu(filename, nr_s, u, align_data):
+    def function_unu(filename, nr_s, u, align_data, results):
         list_files = []
-        dest_directory = "Output/"
-        directory = os.fsencode('Output')
+        dest_directory = results + "/"
+        directory = os.fsencode(results)
         for f in os.listdir(directory):
             filename_a = os.fsdecode(f)
             if filename_a.startswith(filename + '_') or filename_a.startswith(filename + '.'):
@@ -320,27 +320,24 @@ class Evaluate_SAMSA:
         return 0
 
     @staticmethod
-    def evaluate_all():
+    def evaluate_all(source, results):
         score = 0
         nr_sentences_simplified = 0
         nr_sentences = 0
-        directory = os.fsencode('Input')
-        source_directory = 'Input/'
+        directory = os.fsencode(source)
+        source_directory = source + "/"
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
             nr_sentences = nr_sentences + 1
-            score_file = Evaluate_SAMSA.evaluate_one(source_directory + filename)
+            score_file = Evaluate_SAMSA.evaluate_one(source_directory + filename, results)
             if score_file != -1:
                 nr_sentences_simplified = nr_sentences_simplified + 1
                 score = score + score_file
-        print(score)
         score = score / nr_sentences_simplified
-        print(nr_sentences)
-        print(nr_sentences_simplified)
         return score
 
     @staticmethod
-    def evaluate_one(filename):
+    def evaluate_one(filename, results):
         file = filename.split('/')[-1].split('.')[0]
         # extract data from file
         data = Parser.extract_data(filename)
@@ -348,7 +345,7 @@ class Evaluate_SAMSA:
         data_layer1 = data['Layer1']
 
         L1 = Evaluate_SAMSA.get_nr_scenes(data_layer1)
-        L2 = Evaluate_SAMSA.get_nr_sentences(file)
+        L2 = Evaluate_SAMSA.get_nr_sentences(file, results)
         M1 = Evaluate_SAMSA.get_cmrelations(data_layer1, data_layer0)
         A1 = Evaluate_SAMSA.get_cparticipants(data_layer0, data_layer1)
 
@@ -359,7 +356,7 @@ class Evaluate_SAMSA:
             score = 0
         elif L1 > L2:
             scenes = Evaluate_SAMSA.get_scenes(data_layer0, data_layer1)
-            sentences = Evaluate_SAMSA.get_sentences(file)
+            sentences = Evaluate_SAMSA.get_sentences(file, results)
             with open('Alignment_data/' + file + '.json', 'r') as infile:
                 align_data = json.loads(infile.read())
             # compute M
@@ -388,14 +385,14 @@ class Evaluate_SAMSA:
                 if M1[nr_scene].__len__() == 0:
                     unu_mri = 0
                 else:
-                    unu_mri = Evaluate_SAMSA.function_unu(file, M[nr_scene], M1[nr_scene][0], align_data)
+                    unu_mri = Evaluate_SAMSA.function_unu(file, M[nr_scene], M1[nr_scene][0], align_data, results)
                 # print("Unu_mri: ", unu_mri)
                 # al doilea termen al sumei
                 par = [val for sublist in A1[nr_scene] for val in sublist]
                 sum2 = 0
                 if par.__len__() != 0:
                     for p in par:
-                        sum2 = sum2 + Evaluate_SAMSA.function_unu(file, M[nr_scene], p, align_data)
+                        sum2 = sum2 + Evaluate_SAMSA.function_unu(file, M[nr_scene], p, align_data, results)
                     sum2 = sum2/par.__len__()
                 # adunam cei doi termeni la suma totala
                 score_sum = score_sum + unu_mri + sum2
@@ -404,7 +401,7 @@ class Evaluate_SAMSA:
             score = 1.0/(2.0*L1) * score_sum
         else: # L1 = L2
             scenes = Evaluate_SAMSA.get_scenes(data_layer0, data_layer1)
-            sentences = Evaluate_SAMSA.get_sentences(file)
+            sentences = Evaluate_SAMSA.get_sentences(file, results)
             with open('Alignment_data/' + file + '.json', 'r') as infile:
                 align_data = json.loads(infile.read())
             # compute M
@@ -437,14 +434,14 @@ class Evaluate_SAMSA:
                 if M1[nr_scene].__len__() == 0:
                     unu_mri = 0
                 else:
-                    unu_mri = Evaluate_SAMSA.function_unu(file, M[nr_scene], M1[nr_scene][0], align_data)
+                    unu_mri = Evaluate_SAMSA.function_unu(file, M[nr_scene], M1[nr_scene][0], align_data, results)
                 # print("Unu_mri: ", unu_mri)
                 # al doilea termen al sumei
                 par = [val for sublist in A1[nr_scene] for val in sublist]
                 sum2 = 0
                 if par.__len__() != 0:
                     for p in par:
-                        sum2 = sum2 + Evaluate_SAMSA.function_unu(file, M[nr_scene], p, align_data)
+                        sum2 = sum2 + Evaluate_SAMSA.function_unu(file, M[nr_scene], p, align_data, results)
                     sum2 = sum2 / par.__len__()
                 # adunam cei doi termeni la suma totala
                 score_sum = score_sum + unu_mri + sum2
@@ -455,10 +452,10 @@ class Evaluate_SAMSA:
 
     @staticmethod
     def main():
-        # score = Evaluate_SAMSA.evaluate_one("Input/605004.xml")
-        # print(score)
-        # print(Evaluate_SAMSA.get_nr_sentences("20001.xml"))
-        print(Evaluate_SAMSA.evaluate_all())
+        SAMSA.scene_sentence_alignment.align_data(sys.argv[1], sys.argv[2])
+        print("SAMSA score = " + str(Evaluate_SAMSA.evaluate_all(sys.argv[1], sys.argv[2])))
+
 
 if __name__ == '__main__':
     Evaluate_SAMSA.main()
+

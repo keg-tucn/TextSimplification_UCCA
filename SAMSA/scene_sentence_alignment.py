@@ -85,11 +85,14 @@ def is_not_aligned(alignment_data, sentence, id):
     return True
 
 
-def align_data():
-    directory = os.fsencode('Input')
-    dir = "Input/"
-    dir_d = "Output/"
-    dir_dest = os.fsencode('Output')
+def align_data(source, results):
+    if not os.path.exists("Alignment_data"):
+        os.makedirs("Alignment_data")
+
+    directory = os.fsencode(source)
+    dir = source + "/"
+    dir_d = results + "/"
+    dir_dest = os.fsencode(results)
     for file in os.listdir(directory):
         filename = os.fsdecode(file)
         filename_wxml = filename.split('.')
@@ -121,9 +124,3 @@ def align_data():
         else:
             with open('Alignment_data/' + filename_wxml[0] + '.json' , 'w') as outfile:
                 json.dump(None, outfile)
-
-def main():
-    align_data()
-
-if __name__ == '__main__':
-    main()
