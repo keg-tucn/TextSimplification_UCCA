@@ -1,0 +1,4 @@
+devscores: model.dev.csv
+hyperparams: [shared --lstm-layers 2, amr --max-edge-labels 110 --node-label-dim 20 --max-node-labels 1000 --node-category-dim 5 --max-node-categories 25, sdp --max-edge-labels 70, conllu --max-edge-labels 60]
+iterations: [50, 100 --optimizer amsgrad]
+log: model.log
